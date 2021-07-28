@@ -3,14 +3,25 @@ let aggregationCommands = [
   { $limit: 10 },
   {
     $project: {
-      _id: 0,
-      "newobj.babak": "$profileDetails.profileStatus.masterCode",
+      //"_id":0,
+      "_id":"$profileDetails.basicDetails.customerCode",
+      "name":"$profileDetails.basicDetails.customerFullName",
+      "status":"$profileDetails.profileStatus.masterCode",
+      "customerCategory":"$profileDetails.customerCategory.masterCode",
+      "customerSubCategory":"$profileDetails.customerSubCategory.masterCode",
+      "customerType":"$profileDetails.customerType.masterCode",
+      "riskCategory":"$profileDetails.riskDetails.riskCategory.masterCode",
+      "xDir":"$profileDetails.xDirLevel.masterCode",
+      "createdDate":"$profileDetails.createdDate",
+      //"modifiedDate":"$profileDetails.modifiedDate",
+      "account._id":"barbar ba khoroojie as dar lookup",
+      "account.name":"barbar ba meghdare khorojuke look"
     },
   },
 ];
 const mongoose = require("mongoose");
 mongoose.connect(
-  "mongodb://root:h0ts8yOd0S@10.130.17.146:30055/dclm_sbox?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&directConnection=true&ssl=false",
+  "mongodb://localhost:27017/users",
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -21,7 +32,7 @@ const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", function () {
   console.log("connected to MongoDB");
-  let CLM_Profile = mongoose.model("Modal", new mongoose.Schema({}), "Profile");
+  let CLM_Profile = mongoose.model("Modal", new mongoose.Schema({}), "CLM_Profile");
   var query = CLM_Profile.aggregate(aggregationCommands).option({
     allowDiskUse: true,
   });
@@ -29,11 +40,11 @@ db.once("open", function () {
     .cursor({ batchSize: 100 })
     .exec()
     .on("data", (data) => {
-      mongoose.connection.db
-        .collection("userCollection")
+      db
+        .collection("customer")
         .insert(data)
         .then((r) =>
-          console.log(r, "inserted" + data._id)
+          console.log(JSON.stringify(r, null, 2), "inserted" + data._id)
         );
     })
     .on("end", () => console.log("data ended"));
