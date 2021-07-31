@@ -1,15 +1,15 @@
-var batchSize=100;
+var batchSize = 100;
 let aggregationCommands = [
   // { $match: {gt:{_id:"<last id >"}} },
-  { $limit: 2 },
+  { $limit: 12 },
   {
-    $lookup: {   
+    $lookup: {
       from: "CLM_BillingAccount",
       localField: "profileDetails.basicDetails.customerCode",
       foreignField: "billingAccount.customerCode",
       as: "accountstore"
     }
-  },{
+  }, {
     $unwind: { path: "$accountstore", preserveNullAndEmptyArrays: true }
   },
   {
@@ -29,7 +29,7 @@ let aggregationCommands = [
       "account.name": "$accountstore.billingAccount.accountOwnerDetails.customerFullName"
     }
   }
-  
+
 ];
 const mongoose = require("mongoose");
 mongoose.connect(
@@ -39,7 +39,7 @@ mongoose.connect(
     useUnifiedTopology: true,
   }
 );
-const db = mongoose.connection;
+/*const db = mongoose.connection;
 var myoutput=[];
 function insertifready(force) {
   //console.log(myoutput);
@@ -54,26 +54,47 @@ function insertifready(force) {
       console.log(JSON.stringify(r, null, 2))
     });
 }
+*/
+//const db = mongoose.connection;
 
-db.on("error", console.error.bind(console, "connection error:"));
-db.once("open", function () {
-  console.log("connected to MongoDB");
-  let CLM_Profile = mongoose.model("Modal", {}, "CLM_Profile");
-  var query = CLM_Profile.aggregate(aggregationCommands).option({
-    allowDiskUse: true,
-  });
-  query
-    .cursor({ batchSize })
-    .exec() 
-    .on("data", (data) => {
-      myoutput.push(data)
-      insertifready()
-      // console.log(data);
 
-    })
-    .on("end", () => (insertifready(true),console.log("data ended")));
-});
+mongoose.connection.on("error", console.error.bind(console, "connection error:"));
+mongoose.connection.once("open", async function () {
+  console.log("yes we connected")
+  try {
+    var cursor =  mongoose.connection.db.collection("CLM_Profile")
+      .aggregate(aggregationCommands, { allowDiskUse: true},{cursor: { batchSize: 4 }}).batchSize(4)
+      ;
+
+    for await (const doc of cursor){
+      console.log('-'.repeat(20))
+      console.log(doc)
+    }
+
+    // while(await cursor.hasNext()) {
+
+    //   // let batch = await cursor.toArray();
+      
+    //   console.log("|".repeat(10));
+    //   // mongoose.connection.db
+    //   //   .collection("customer")
+    //   //   .insertMany(batch)
+    //   cursor.next();
+    //   // if (await cursor.hasNext()) await cursor.next();
+    //   // else break;
+    // } 
+  } catch (e) {
+    console.error(e)
+  }
+}
+);
+
+
+
+
+
 /*
+
 async function(){
 try{
   let cursor = await  db.collection("alie").aggregate(aggregationCommands,{
