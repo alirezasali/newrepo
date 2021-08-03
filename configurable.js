@@ -10,38 +10,6 @@ var startDate = new Date();
 
 var output = [];
 
-let aggregationCommands = [
-  { $limit: 20 },
-  {
-    $lookup: {
-      from: "CLM_BillingAccount",
-      localField: "profileDetails.basicDetails.customerCode",
-      foreignField: "billingAccount.customerCode",
-      as: "accountstore"
-    }
-  }, {
-    $unwind: { path: "$accountstore", preserveNullAndEmptyArrays: true }
-  },
-  {
-    $project: {
-      "_id": "$profileDetails.basicDetails.customerCode",
-      "name": "$profileDetails.basicDetails.customerFullName",
-      "status": "$profileDetails.profileStatus.masterCode",
-      "customerCategory": "$profileDetails.customerCategory.masterCode",
-      "customerSubCategory": "$profileDetails.customerSubCategory.masterCode",
-      "customerType": "$profileDetails.customerType.masterCode",
-      "riskCategory": "$profileDetails.riskDetails.riskCategory.masterCode",
-      "xDir": "$profileDetails.xDirLevel.masterCode",
-      "createdDate": "$profileDetails.createdDate",
-      //"modifiedDate":"$profileDetails.modifiedDate",
-      "account._id": "$accountstore.billingAccount.accountCode",
-      "account.name": "$accountstore.billingAccount.accountOwnerDetails.customerFullName"
-    },
-
-  },
-
-];
-//let qincollstr
 const mongoose = require("mongoose");
 (async function () {
   const config = await new Promise((res, rejj) => {
@@ -63,7 +31,7 @@ const mongoose = require("mongoose");
       });
     });
   })
-//return console.log(config);
+ //return console.log(config);
 
   var middletDate = new Date();
   var secondsAfterFirstQuery = (middletDate.getTime() - startDate.getTime()) / 1000;
@@ -99,24 +67,24 @@ const mongoose = require("mongoose");
           //Insert Statement
           try {
             let result = await conn2.db.collection(config.outputCollection).insertMany(output);
-            console.log('succeed', JSON.stringify(result, null, 2));
+            //console.log('succeed', JSON.stringify(result, null, 2));
             console.log("-".repeat(50));
 
             output = [];
-          } catch (e) {s
+          } catch (e) {
             console.error('failed', e);
           }
 
         }
       };
-
+      var endDate = new Date();
+      var seconds = (endDate.getTime() - startDate.getTime()) / 1000;
+      console.log("time to run first part: " + secondsAfterFirstQuery);
+      console.log("time to run all: " + seconds);
+      
     } catch (e) {
       console.error(e);
     }
   });
-  var endDate = new Date();
-  var seconds = (endDate.getTime() - startDate.getTime()) / 1000;
-  console.log("time to run all: " + seconds);
-  console.log("time to run first part: " + secondsAfterFirstQuery);
-  console.log(queryOutputCollection);
+  
 })();
